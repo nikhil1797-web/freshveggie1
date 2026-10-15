@@ -1,0 +1,636 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FreshVeggie - Vegetable Store</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f5fbf2;
+    color: #263b2a;
+}
+.navbar { background: white; }
+.brand { color: #218838; font-size: 25px; font-weight: bold; }
+.hero {
+    padding: 50px 0;
+    background: linear-gradient(120deg, #dff8d8, #fff0d2);
+}
+.hero h1 { font-size: clamp(35px, 5vw, 60px); font-weight: 800; }
+.hero h1 span { color: #218838; }
+.hero img {
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+    border-radius: 20px;
+}
+.btn-green {
+    background: #218838;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+}
+.btn-green:hover { background: #17692a; color: white; }
+.product-card {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+    height: 100%;
+    box-shadow: 0 4px 15px #00000012;
+}
+.product-img { width: 100%; height: 165px; object-fit: cover; }
+.price { color: #218838; font-weight: bold; font-size: 19px; }
+.category-btn { border-radius: 25px; margin: 4px; }
+.category-btn.active { background: #218838; color: white; }
+.cart-box { background: white; border-radius: 15px; padding: 22px; }
+.cart-item { padding: 12px 0; border-bottom: 1px solid #eee; }
+footer { background: #173d26; color: white; padding: 25px; margin-top: 40px; }
+.auth-panel {
+    position: fixed;
+    inset: 0;
+    background: #0008;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.auth-card {
+    background: white;
+    border-radius: 18px;
+    padding: 30px;
+    width: 100%;
+    max-width: 430px;
+    max-height: 90vh;
+    overflow: auto;
+}
+.d-none-custom { display: none !important; }
+@media(max-width: 767px) {
+    .hero { padding: 30px 0; }
+    .hero img { height: 210px; }
+    .product-img { height: 130px; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg sticky-top shadow-sm">
+<div class="container">
+<a class="navbar-brand brand" href="#home">🥬 FreshVeggie</a>
+
+<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" aria-label="Toggle navigation">
+<span class="navbar-toggler-icon"></span>
+</button>
+
+<div class="collapse navbar-collapse" id="navMenu">
+<ul class="navbar-nav ms-auto align-items-lg-center">
+<li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
+<li class="nav-item"><a class="nav-link" href="#products">Vegetables</a></li>
+<li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+<li class="nav-item"><a class="btn btn-green m-2" href="#cart">Cart (<span id="cartCount">0</span>)</a></li>
+<li class="nav-item" id="loginNav"><button class="btn btn-outline-success m-2" id="openLogin">Login</button></li>
+<li class="nav-item" id="registerNav"><button class="btn btn-green m-2" id="openRegister">Register</button></li>
+<li class="nav-item d-none-custom" id="userGreeting">
+<span class="small text-success me-2" id="welcomeText"></span>
+<button class="btn btn-outline-danger btn-sm" id="logoutBtn">Logout</button>
+</li>
+</ul>
+</div>
+</div>
+</nav>
+
+<!-- HOMEPAGE -->
+<section class="hero" id="home">
+<div class="container">
+<div class="row align-items-center g-4">
+<div class="col-md-6">
+<h1>Eat Fresh.<br><span>Live Healthy.</span></h1>
+<p class="my-4">Shop fresh vegetables for your family. Healthy food and affordable prices at your fingertips!</p>
+<a href="#products" class="btn btn-green">Shop Vegetables →</a>
+</div>
+<div class="col-md-6">
+<img src="https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=900&q=80" alt="Fresh vegetables">
+</div>
+</div>
+</div>
+</section>
+
+<!-- PRODUCTS -->
+<section class="container py-5" id="products">
+<div class="text-center mb-4">
+<h2 class="fw-bold">Our Fresh Vegetables 🥦</h2>
+<p class="text-secondary">Fresh picks for your everyday meals</p>
+</div>
+
+<div class="row justify-content-center mb-3">
+<div class="col-md-6">
+<input id="searchInput" class="form-control" placeholder="Search vegetables...">
+</div>
+</div>
+
+<div class="text-center mb-4">
+<button class="btn btn-outline-success category-btn active" data-cat="All">All</button>
+<button class="btn btn-outline-success category-btn" data-cat="Leafy">Leafy Greens</button>
+<button class="btn btn-outline-success category-btn" data-cat="Root">Root Vegetables</button>
+<button class="btn btn-outline-success category-btn" data-cat="Other">Other Vegetables</button>
+</div>
+
+<div class="d-flex justify-content-end align-items-center gap-2 mb-4">
+<label for="sortSelect">Sort:</label>
+<select id="sortSelect" class="form-select" style="max-width:190px">
+<option value="default">Featured</option>
+<option value="low">Price: Low to High</option>
+<option value="high">Price: High to Low</option>
+<option value="name">Name: A to Z</option>
+</select>
+</div>
+
+<div class="row g-4" id="productList"></div>
+<p id="noResults" class="text-center d-none mt-4">No vegetables found.</p>
+</section>
+
+<!-- CART -->
+<section class="container py-4" id="cart">
+<h2 class="fw-bold mb-4">🛒 Your Shopping Cart</h2>
+<div class="cart-box shadow-sm">
+<div id="cartItems">Your cart is empty.</div>
+<hr>
+<div class="d-flex justify-content-between mb-3">
+<strong>Total Amount</strong>
+<strong class="price" id="cartTotal">₹0.00</strong>
+</div>
+<button class="btn btn-outline-danger me-2" id="clearCart">Clear Cart</button>
+<button class="btn btn-green" id="checkoutBtn">Checkout</button>
+<p class="small text-secondary mt-3">Demo checkout only. No real payment is processed.</p>
+</div>
+</section>
+
+<!-- CHECKOUT -->
+<section class="container py-4 d-none" id="checkoutSection">
+<div class="cart-box shadow-sm">
+<h2 class="fw-bold mb-3">Delivery Details</h2>
+<form id="checkoutForm">
+<div class="mb-3">
+<label for="customerName" class="form-label">Full Name</label>
+<input id="customerName" class="form-control" required minlength="2">
+</div>
+<div class="mb-3">
+<label for="customerPhone" class="form-label">Mobile Number</label>
+<input id="customerPhone" class="form-control" type="tel" pattern="[0-9]{10}" maxlength="10" required placeholder="10-digit mobile number">
+</div>
+<div class="mb-3">
+<label for="customerAddress" class="form-label">Delivery Address</label>
+<textarea id="customerAddress" class="form-control" rows="3" minlength="8" required></textarea>
+</div>
+<button class="btn btn-green" type="submit">Place Demo Order</button>
+<button class="btn btn-secondary" type="button" id="cancelCheckout">Cancel</button>
+</form>
+<div id="orderMessage" class="alert alert-success mt-3 d-none" role="status"></div>
+</div>
+</section>
+
+<!-- ABOUT -->
+<section class="container py-5" id="about">
+<div class="text-center p-4 p-md-5" style="background:#e5f6df;border-radius:20px">
+<h2 class="fw-bold">Why FreshVeggie? 🌱</h2>
+<p class="mt-3">Browse fresh vegetables, compare prices and manage your shopping cart easily. Healthy food makes a happy life!</p>
+</div>
+</section>
+
+<footer class="text-center">
+<h4>FreshVeggie 🥬</h4>
+<p>Fresh food, happy life!</p>
+<p class="small mb-0">© <span id="year"></span> FreshVeggie | College Mini Project</p>
+</footer>
+
+<!-- LOGIN / REGISTER POPUP -->
+<div id="authPanel" class="auth-panel d-none-custom" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+<div class="auth-card">
+<div class="d-flex justify-content-between align-items-center mb-3">
+<h2 id="authTitle" class="fw-bold mb-0">Login</h2>
+<button type="button" class="btn-close" id="closeAuth" aria-label="Close"></button>
+</div>
+
+<div class="btn-group w-100 mb-4">
+<button type="button" class="btn btn-outline-success active" id="loginTab">Login</button>
+<button type="button" class="btn btn-outline-success" id="registerTab">Register</button>
+</div>
+
+<form id="authForm">
+<div class="mb-3 d-none" id="nameGroup">
+<label for="authName" class="form-label">Full Name</label>
+<input id="authName" class="form-control" minlength="2" autocomplete="name">
+</div>
+<div class="mb-3">
+<label for="authEmail" class="form-label">Email Address</label>
+<input id="authEmail" class="form-control" type="email" required autocomplete="email" placeholder="you@example.com">
+</div>
+<div class="mb-3">
+<label for="authPassword" class="form-label">Password</label>
+<input id="authPassword" class="form-control" type="password" minlength="6" required autocomplete="current-password" placeholder="At least 6 characters">
+</div>
+<div class="mb-3 d-none" id="confirmGroup">
+<label for="confirmPassword" class="form-label">Confirm Password</label>
+<input id="confirmPassword" class="form-control" type="password" minlength="6" autocomplete="new-password">
+</div>
+<div id="authMessage" class="small mb-3" role="status"></div>
+<button type="submit" class="btn btn-green w-100" id="authSubmit">Login</button>
+<p class="small text-secondary mt-3 mb-0">Demo project: accounts are stored in this browser and are not securely authenticated.</p>
+</form>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// PRODUCT DATA
+const products = [
+{id:1,name:"Tomatoes",price:30,unit:"kg",category:"Other",emoji:"🍅",image:"https://images.unsplash.com/photo-1546094096-0df4bcaaa337?auto=format&fit=crop&w=500&q=80"},
+{id:2,name:"Carrots",price:40,unit:"kg",category:"Root",emoji:"🥕",image:"https://images.unsplash.com/photo-1445282768818-728615cc910a?auto=format&fit=crop&w=500&q=80"},
+{id:3,name:"Broccoli",price:60,unit:"piece",category:"Other",emoji:"🥦",image:"https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?auto=format&fit=crop&w=500&q=80"},
+{id:4,name:"Spinach",price:25,unit:"bunch",category:"Leafy",emoji:"🥬",image:"https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=500&q=80"},
+{id:5,name:"Potatoes",price:35,unit:"kg",category:"Root",emoji:"🥔",image:"https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=500&q=80"},
+{id:6,name:"Capsicum",price:80,unit:"kg",category:"Other",emoji:"🫑",image:"https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?auto=format&fit=crop&w=500&q=80"},
+{id:7,name:"Cabbage",price:30,unit:"piece",category:"Leafy",emoji:"🥬",image:"https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f?auto=format&fit=crop&w=500&q=80"},
+{id:8,name:"Onions",price:40,unit:"kg",category:"Root",emoji:"🧅",image:"https://images.unsplash.com/photo-1508747703725-719777637510?auto=format&fit=crop&w=500&q=80"}
+];
+
+let cart = [];
+let selectedCategory = "All";
+let searchText = "";
+let sortOrder = "default";
+let authMode = "login";
+let currentUser = null;
+
+function money(amount) {
+    return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR"
+    }).format(amount);
+}
+
+// ACCOUNT STORAGE
+function getUsers() {
+    try {
+        return JSON.parse(localStorage.getItem("freshVeggieUsers") || "[]");
+    } catch (error) {
+        return [];
+    }
+}
+
+function openAuth(mode) {
+    setAuthMode(mode);
+    document.getElementById("authMessage").textContent = "";
+    document.getElementById("authPanel").classList.remove("d-none-custom");
+    document.body.style.overflow = "hidden";
+}
+
+function closeAuth() {
+    document.getElementById("authPanel").classList.add("d-none-custom");
+    document.body.style.overflow = "";
+    document.getElementById("authForm").reset();
+}
+
+function setAuthMode(mode) {
+    authMode = mode;
+    const registering = mode === "register";
+
+    document.getElementById("authTitle").textContent = registering ? "Create Account" : "Login";
+    document.getElementById("authSubmit").textContent = registering ? "Register" : "Login";
+    document.getElementById("nameGroup").classList.toggle("d-none", !registering);
+    document.getElementById("confirmGroup").classList.toggle("d-none", !registering);
+    document.getElementById("authName").required = registering;
+    document.getElementById("confirmPassword").required = registering;
+    document.getElementById("authPassword").autocomplete = registering ? "new-password" : "current-password";
+    document.getElementById("loginTab").classList.toggle("active", !registering);
+    document.getElementById("registerTab").classList.toggle("active", registering);
+    document.getElementById("authMessage").textContent = "";
+}
+
+function enterStore(name, email) {
+    currentUser = {name, email};
+
+    document.getElementById("welcomeText").textContent = "Hi, " + name;
+    document.getElementById("userGreeting").classList.remove("d-none-custom");
+    document.getElementById("loginNav").classList.add("d-none-custom");
+    document.getElementById("registerNav").classList.add("d-none-custom");
+
+    closeAuth();
+    alert("Login successful! You can now add vegetables to your cart.");
+}
+
+document.getElementById("openLogin").addEventListener("click", () => openAuth("login"));
+document.getElementById("openRegister").addEventListener("click", () => openAuth("register"));
+document.getElementById("closeAuth").addEventListener("click", closeAuth);
+document.getElementById("loginTab").addEventListener("click", () => setAuthMode("login"));
+document.getElementById("registerTab").addEventListener("click", () => setAuthMode("register"));
+
+document.getElementById("authPanel").addEventListener("click", event => {
+    if (event.target.id === "authPanel") closeAuth();
+});
+
+// LOGIN AND REGISTER
+document.getElementById("authForm").addEventListener("submit", event => {
+    event.preventDefault();
+
+    if (!event.target.reportValidity()) return;
+
+    const name = document.getElementById("authName").value.trim();
+    const email = document.getElementById("authEmail").value.trim().toLowerCase();
+    const password = document.getElementById("authPassword").value;
+    const confirm = document.getElementById("confirmPassword").value;
+    const message = document.getElementById("authMessage");
+
+    message.className = "small mb-3";
+
+    if (authMode === "register") {
+        if (password !== confirm) {
+            message.textContent = "Passwords do not match.";
+            message.classList.add("text-danger");
+            return;
+        }
+
+        const users = getUsers();
+
+        if (users.some(user => user.email === email)) {
+            message.textContent = "Email already registered. Please log in.";
+            message.classList.add("text-danger");
+            return;
+        }
+
+        users.push({name, email, password});
+
+        try {
+            localStorage.setItem("freshVeggieUsers", JSON.stringify(users));
+        } catch (error) {
+            message.textContent = "Unable to save account in this browser.";
+            message.classList.add("text-danger");
+            return;
+        }
+
+        enterStore(name, email);
+
+    } else {
+        const user = getUsers().find(user =>
+            user.email === email && user.password === password
+        );
+
+        if (!user) {
+            message.textContent = "Incorrect email or password. Register first if you are new.";
+            message.classList.add("text-danger");
+            return;
+        }
+
+        enterStore(user.name, user.email);
+    }
+});
+
+// LOGOUT
+document.getElementById("logoutBtn").addEventListener("click", () => {
+    currentUser = null;
+
+    document.getElementById("welcomeText").textContent = "";
+    document.getElementById("userGreeting").classList.add("d-none-custom");
+    document.getElementById("loginNav").classList.remove("d-none-custom");
+    document.getElementById("registerNav").classList.remove("d-none-custom");
+    document.getElementById("checkoutSection").classList.add("d-none");
+
+    alert("You have logged out. Log in again to shop.");
+});
+
+// DISPLAY PRODUCTS
+function renderProducts() {
+    let filtered = products.filter(p =>
+        p.name.toLowerCase().includes(searchText.toLowerCase()) &&
+        (selectedCategory === "All" || p.category === selectedCategory)
+    );
+
+    if (sortOrder === "low") filtered.sort((a, b) => a.price - b.price);
+    if (sortOrder === "high") filtered.sort((a, b) => b.price - a.price);
+    if (sortOrder === "name") filtered.sort((a, b) => a.name.localeCompare(b.name));
+
+    document.getElementById("noResults").classList.toggle("d-none", filtered.length > 0);
+
+    document.getElementById("productList").innerHTML = filtered.map(p => `
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card product-card">
+                <img src="${p.image}" class="product-img" alt="${p.name}" loading="lazy"
+                onerror="this.style.display='none'">
+                <div class="card-body d-flex flex-column">
+                    <small class="text-secondary">${p.category} vegetables</small>
+                    <h5 class="fw-bold mt-2">${p.emoji} ${p.name}</h5>
+                    <p><span class="price">${money(p.price)}</span>
+                    <small class="text-secondary">/ ${p.unit}</small></p>
+                    <button class="btn btn-green mt-auto" onclick="addToCart(${p.id})">
+                    + Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join("");
+}
+
+// CART: LOGIN REQUIRED
+function addToCart(id) {
+    if (!currentUser) {
+        alert("Please login or register before selecting vegetables.");
+        openAuth("login");
+        return;
+    }
+
+    const item = cart.find(p => p.id === id);
+
+    if (item) item.quantity++;
+    else cart.push({id, quantity: 1});
+
+    renderCart();
+}
+
+function changeQuantity(id, amount) {
+    if (!currentUser) {
+        openAuth("login");
+        return;
+    }
+
+    const item = cart.find(p => p.id === id);
+    if (!item) return;
+
+    item.quantity += amount;
+
+    if (item.quantity <= 0) {
+        cart = cart.filter(p => p.id !== id);
+    }
+
+    renderCart();
+}
+
+function removeItem(id) {
+    if (!currentUser) {
+        openAuth("login");
+        return;
+    }
+
+    cart = cart.filter(p => p.id !== id);
+    renderCart();
+}
+
+function renderCart() {
+    const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+    const total = cart.reduce((sum, item) => {
+        const product = products.find(p => p.id === item.id);
+        return sum + product.price * item.quantity;
+    }, 0);
+
+    document.getElementById("cartCount").textContent = count;
+    document.getElementById("cartTotal").textContent = money(total);
+
+    const cartItems = document.getElementById("cartItems");
+
+    if (cart.length === 0) {
+        cartItems.innerHTML = '<p class="text-center text-secondary">Your cart is empty.</p>';
+        document.getElementById("checkoutSection").classList.add("d-none");
+        return;
+    }
+
+    cartItems.innerHTML = cart.map(item => {
+        const p = products.find(product => product.id === item.id);
+
+        return `
+            <div class="cart-item d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                <div>
+                    <strong>${p.emoji} ${p.name}</strong>
+                    <div class="small text-secondary">${money(p.price)} / ${p.unit}</div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="changeQuantity(${p.id},-1)">−</button>
+                    <span>${item.quantity}</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="changeQuantity(${p.id},1)">+</button>
+                </div>
+                <div class="text-end">
+                    <strong>${money(p.price * item.quantity)}</strong>
+                    <button class="btn btn-sm text-danger d-block ms-auto" onclick="removeItem(${p.id})">Remove</button>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+// SEARCH
+document.getElementById("searchInput").addEventListener("input", event => {
+    searchText = event.target.value.trim();
+    renderProducts();
+});
+
+// SORT
+document.getElementById("sortSelect").addEventListener("change", event => {
+    sortOrder = event.target.value;
+    renderProducts();
+});
+
+// CATEGORY FILTER
+document.querySelectorAll(".category-btn").forEach(button => {
+    button.addEventListener("click", () => {
+        selectedCategory = button.dataset.cat;
+
+        document.querySelectorAll(".category-btn").forEach(btn => {
+            btn.classList.toggle("active", btn === button);
+        });
+
+        renderProducts();
+    });
+});
+
+// CLEAR CART
+document.getElementById("clearCart").addEventListener("click", () => {
+    if (!currentUser) {
+        openAuth("login");
+        return;
+    }
+
+    if (cart.length && confirm("Clear your shopping cart?")) {
+        cart = [];
+        renderCart();
+    }
+});
+
+// CHECKOUT: LOGIN REQUIRED
+document.getElementById("checkoutBtn").addEventListener("click", () => {
+    if (!currentUser) {
+        alert("Please login or register before checkout.");
+        openAuth("login");
+        return;
+    }
+
+    if (cart.length === 0) {
+        alert("Please add vegetables to your cart first.");
+        return;
+    }
+
+    document.getElementById("orderMessage").classList.add("d-none");
+    document.getElementById("checkoutSection").classList.remove("d-none");
+    document.getElementById("checkoutSection").scrollIntoView({behavior: "smooth"});
+});
+
+document.getElementById("cancelCheckout").addEventListener("click", () => {
+    document.getElementById("checkoutSection").classList.add("d-none");
+});
+
+// PLACE DEMO ORDER
+document.getElementById("checkoutForm").addEventListener("submit", event => {
+    event.preventDefault();
+
+    if (!currentUser) {
+        openAuth("login");
+        return;
+    }
+
+    if (cart.length === 0 || !event.target.reportValidity()) return;
+
+    const name = document.getElementById("customerName").value.trim();
+
+    if (name.length < 2) return;
+
+    const total = cart.reduce((sum, item) => {
+        const p = products.find(product => product.id === item.id);
+        return sum + p.price * item.quantity;
+    }, 0);
+
+    const message = document.getElementById("orderMessage");
+    message.textContent = `Thank you, ${name}! Your demo order total is ${money(total)}.`;
+    message.classList.remove("d-none");
+
+    cart = [];
+    renderCart();
+    event.target.reset();
+
+    document.getElementById("checkoutSection").classList.remove("d-none");
+});
+
+// CLOSE MOBILE NAVBAR AFTER CLICK
+document.querySelectorAll("#navMenu .nav-link").forEach(link => {
+    link.addEventListener("click", () => {
+        const menu = document.getElementById("navMenu");
+
+        if (menu.classList.contains("show")) {
+            bootstrap.Collapse.getOrCreateInstance(menu).hide();
+        }
+    });
+});
+
+// INITIALIZE
+document.getElementById("year").textContent = new Date().getFullYear();
+renderProducts();
+renderCart();
+</script>
+
+</body>
+</html>
+```
